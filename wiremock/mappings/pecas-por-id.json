@@ -1,0 +1,49 @@
+{
+  "mappings": [
+    {
+      "name": "GET peca por id - com estoque",
+      "priority": 1,
+      "request": { "method": "GET", "urlPath": "/pecas/33333333-3333-3333-3333-333333333333" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "id": "33333333-3333-3333-3333-333333333333",
+          "codigo": "FLT-OLEO-001",
+          "nome": "Filtro de oleo",
+          "precoUnitario": 35.90,
+          "estoque": 10
+        }
+      }
+    },
+    {
+      "name": "GET peca por id - sem estoque",
+      "priority": 1,
+      "request": { "method": "GET", "urlPath": "/pecas/44444444-4444-4444-4444-444444444444" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "id": "44444444-4444-4444-4444-444444444444",
+          "codigo": "PST-FRE-002",
+          "nome": "Pastilha de freio",
+          "precoUnitario": 120.00,
+          "estoque": 0
+        }
+      }
+    },
+    {
+      "name": "GET peca por id - nao encontrada",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/pecas/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+      },
+      "response": {
+        "status": 404,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": { "code": "PECA_NAO_ENCONTRADA", "message": "Peca nao encontrada." }
+      }
+    }
+  ]
+}

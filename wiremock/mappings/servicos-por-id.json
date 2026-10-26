@@ -1,0 +1,47 @@
+{
+  "mappings": [
+    {
+      "name": "GET servico por id - encontrado",
+      "priority": 1,
+      "request": { "method": "GET", "urlPath": "/servicos/55555555-5555-5555-5555-555555555555" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "id": "55555555-5555-5555-5555-555555555555",
+          "nome": "Troca de oleo",
+          "precoUnitario": 80.00,
+          "tempoEstimadoHoras": 0.5
+        }
+      }
+    },
+    {
+      "name": "GET servico por id - encontrado (alinhamento)",
+      "priority": 1,
+      "request": { "method": "GET", "urlPath": "/servicos/66666666-6666-6666-6666-666666666666" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": {
+          "id": "66666666-6666-6666-6666-666666666666",
+          "nome": "Alinhamento e balanceamento",
+          "precoUnitario": 150.00,
+          "tempoEstimadoHoras": 1.5
+        }
+      }
+    },
+    {
+      "name": "GET servico por id - nao encontrado",
+      "priority": 5,
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/servicos/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+      },
+      "response": {
+        "status": 404,
+        "headers": { "Content-Type": "application/json" },
+        "jsonBody": { "code": "SERVICO_NAO_ENCONTRADO", "message": "Servico nao encontrado." }
+      }
+    }
+  ]
+}

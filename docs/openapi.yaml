@@ -5,7 +5,9 @@ info:
     Serviço de master data da oficina mecânica.
     Gerencia Cliente, Veículo, Peça e Serviço.
     Consumido pelos outros microsserviços via REST síncrono.
-  version: 1.0.0
+
+    Evento publicado: `cliente.desativado` (ver contratos/eventos/schemas.md).
+  version: 1.1.0
   contact:
     name: Pedro (Papel D)
 
@@ -28,6 +30,7 @@ paths:
     post:
       tags: [Clientes]
       summary: Criar cliente
+      operationId: criarCliente
       requestBody:
         required: true
         content:
@@ -44,20 +47,46 @@ paths:
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
-          description: CPF já cadastrado
+          $ref: '#/components/responses/Conflict'
 
   /clientes/{id}:
     get:
       tags: [Clientes]
       summary: Buscar cliente por ID
+      operationId: buscarClientePorId
       parameters:
         - $ref: '#/components/parameters/Id'
       responses:
         '200':
+          description: Cliente encontrado
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Cliente'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Clientes]
+      summary: Atualizar cliente
+      description: O CPF não pode ser alterado.
+      operationId: atualizarCliente
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarClienteRequest'
+      responses:
+        '200':
+          description: Cliente atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -65,20 +94,25 @@ paths:
     get:
       tags: [Clientes]
       summary: Buscar cliente por CPF
-      description: Endpoint principal consumido pelo OS Service ao abrir uma OS
+      description: Endpoint principal consumido pelo OS Service ao abrir uma OS.
+      operationId: buscarClientePorCpf
       parameters:
         - name: cpf
           in: path
           required: true
+          description: CPF somente com dígitos (11).
           schema:
             type: string
             pattern: '^\d{11}$'
       responses:
         '200':
+          description: Cliente encontrado
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Cliente'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -87,27 +121,30 @@ paths:
       tags: [Clientes]
       summary: Desativar cliente
       description: |
-        Marca cliente como inativo e publica evento `cliente.desativado`.
-        OS Service consome esse evento para cancelar OSes abertas.
+        Marca o cliente como inativo (desativação lógica) e publica o evento
+        `cliente.desativado`. O OS Service consome esse evento para cancelar
+        as OSes abertas do cliente.
+      operationId: desativarCliente
       parameters:
         - $ref: '#/components/parameters/Id'
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                motivo:
-                  type: string
-                  enum: [solicitacao_cliente, inadimplencia, outro]
+              $ref: '#/components/schemas/DesativarClienteRequest'
       responses:
         '204':
           description: Cliente desativado
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /veiculos:
     post:
       tags: [Veiculos]
       summary: Cadastrar veículo
+      operationId: criarVeiculo
       requestBody:
         required: true
         content:
@@ -116,16 +153,71 @@ paths:
               $ref: '#/components/schemas/CriarVeiculoRequest'
       responses:
         '201':
+          description: Veículo criado
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Veiculo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Cliente informado em `clienteId` não existe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /veiculos/{id}:
+    get:
+      tags: [Veiculos]
+      summary: Buscar veículo por ID
+      operationId: buscarVeiculoPorId
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          description: Veículo encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Veiculo'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Veiculos]
+      summary: Atualizar veículo
+      description: Placa e cliente não podem ser alterados.
+      operationId: atualizarVeiculo
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarVeiculoRequest'
+      responses:
+        '200':
+          description: Veículo atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Veiculo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /veiculos/placa/{placa}:
     get:
       tags: [Veiculos]
       summary: Buscar veículo por placa
-      description: Consumido pelo OS Service ao abrir OS
+      description: |
+        Consumido pelo OS Service ao abrir OS.
+        A placa é normalizada para maiúsculas na busca.
+      operationId: buscarVeiculoPorPlaca
       parameters:
         - name: placa
           in: path
@@ -134,6 +226,7 @@ paths:
             type: string
       responses:
         '200':
+          description: Veículo encontrado
           content:
             application/json:
               schema:
@@ -145,14 +238,37 @@ paths:
     get:
       tags: [Pecas]
       summary: Listar peças
+      operationId: listarPecas
       responses:
         '200':
+          description: Lista de peças
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Peca'
+    post:
+      tags: [Pecas]
+      summary: Cadastrar peça
+      operationId: criarPeca
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarPecaRequest'
+      responses:
+        '201':
+          description: Peça criada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Peca'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
   /pecas/{id}:
     get:
@@ -161,30 +277,104 @@ paths:
       description: |
         Consumido pelo Billing Service para calcular orçamento
         e pelo Execução Service para validar estoque.
+      operationId: buscarPecaPorId
       parameters:
         - $ref: '#/components/parameters/Id'
       responses:
         '200':
+          description: Peça encontrada
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Peca'
         '404':
           $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Pecas]
+      summary: Atualizar peça
+      description: O código não pode ser alterado.
+      operationId: atualizarPeca
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarPecaRequest'
+      responses:
+        '200':
+          description: Peça atualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Peca'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /servicos:
+    post:
+      tags: [Servicos]
+      summary: Cadastrar serviço
+      operationId: criarServico
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarServicoRequest'
+      responses:
+        '201':
+          description: Serviço criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Servico'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
   /servicos/{id}:
     get:
       tags: [Servicos]
       summary: Buscar serviço
-      description: Consumido pelo Billing Service para calcular orçamento
+      description: Consumido pelo Billing Service para calcular orçamento.
+      operationId: buscarServicoPorId
       parameters:
         - $ref: '#/components/parameters/Id'
       responses:
         '200':
+          description: Serviço encontrado
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Servico'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Servicos]
+      summary: Atualizar serviço
+      operationId: atualizarServico
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AtualizarServicoRequest'
+      responses:
+        '200':
+          description: Serviço atualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Servico'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 components:
   parameters:
@@ -209,6 +399,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflito com o estado atual do recurso (duplicidade ou transição inválida)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
 
   schemas:
     Cliente:
@@ -216,9 +412,9 @@ components:
       properties:
         id: { type: string, format: uuid }
         nome: { type: string }
-        cpf: { type: string }
+        cpf: { type: string, pattern: '^\d{11}$' }
         email: { type: string, format: email }
-        telefone: { type: string }
+        telefone: { type: string, nullable: true }
         ativo: { type: boolean }
         criadoEm: { type: string, format: date-time }
 
@@ -230,6 +426,21 @@ components:
         cpf: { type: string, pattern: '^\d{11}$' }
         email: { type: string, format: email }
         telefone: { type: string }
+
+    AtualizarClienteRequest:
+      type: object
+      required: [nome, email]
+      properties:
+        nome: { type: string }
+        email: { type: string, format: email }
+        telefone: { type: string }
+
+    DesativarClienteRequest:
+      type: object
+      properties:
+        motivo:
+          type: string
+          enum: [solicitacao_cliente, inadimplencia, outro]
 
     Veiculo:
       type: object
@@ -251,22 +462,63 @@ components:
         ano: { type: integer }
         clienteId: { type: string, format: uuid }
 
+    AtualizarVeiculoRequest:
+      type: object
+      required: [modelo, marca, ano]
+      properties:
+        modelo: { type: string }
+        marca: { type: string }
+        ano: { type: integer }
+
     Peca:
       type: object
       properties:
         id: { type: string, format: uuid }
         codigo: { type: string }
         nome: { type: string }
-        precoUnitario: { type: number, format: decimal }
+        precoUnitario: { type: number, format: double }
         estoque: { type: integer }
+
+    CriarPecaRequest:
+      type: object
+      required: [codigo, nome, precoUnitario, estoque]
+      properties:
+        codigo: { type: string }
+        nome: { type: string }
+        precoUnitario: { type: number, format: double, minimum: 0 }
+        estoque: { type: integer, minimum: 0 }
+
+    AtualizarPecaRequest:
+      type: object
+      required: [nome, precoUnitario, estoque]
+      properties:
+        nome: { type: string }
+        precoUnitario: { type: number, format: double, minimum: 0 }
+        estoque: { type: integer, minimum: 0 }
 
     Servico:
       type: object
       properties:
         id: { type: string, format: uuid }
         nome: { type: string }
-        precoUnitario: { type: number, format: decimal }
+        precoUnitario: { type: number, format: double }
         tempoEstimadoHoras: { type: number }
+
+    CriarServicoRequest:
+      type: object
+      required: [nome, precoUnitario, tempoEstimadoHoras]
+      properties:
+        nome: { type: string }
+        precoUnitario: { type: number, format: double, minimum: 0 }
+        tempoEstimadoHoras: { type: number, minimum: 0 }
+
+    AtualizarServicoRequest:
+      type: object
+      required: [nome, precoUnitario, tempoEstimadoHoras]
+      properties:
+        nome: { type: string }
+        precoUnitario: { type: number, format: double, minimum: 0 }
+        tempoEstimadoHoras: { type: number, minimum: 0 }
 
     Error:
       type: object

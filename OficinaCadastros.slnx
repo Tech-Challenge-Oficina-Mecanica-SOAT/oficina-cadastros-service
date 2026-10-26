@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OficinaCadastros.API/OficinaCadastros.API.csproj" />
+    <Project Path="src/OficinaCadastros.Application/OficinaCadastros.Application.csproj" />
+    <Project Path="src/OficinaCadastros.Domain/OficinaCadastros.Domain.csproj" />
+    <Project Path="src/OficinaCadastros.Infrastructure/OficinaCadastros.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OficinaCadastros.UnitTests/OficinaCadastros.UnitTests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,275 @@
+openapi: 3.0.3
+info:
+  title: Cadastros Service API
+  description: |
+    Serviço de master data da oficina mecânica.
+    Gerencia Cliente, Veículo, Peça e Serviço.
+    Consumido pelos outros microsserviços via REST síncrono.
+  version: 1.0.0
+  contact:
+    name: Pedro (Papel D)
+
+servers:
+  - url: https://api-{env}.oficina.example.com/cadastros
+    description: Homolog e Prod
+    variables:
+      env:
+        default: homolog
+        enum: [homolog, prod]
+
+tags:
+  - name: Clientes
+  - name: Veiculos
+  - name: Pecas
+  - name: Servicos
+
+paths:
+  /clientes:
+    post:
+      tags: [Clientes]
+      summary: Criar cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarClienteRequest'
+      responses:
+        '201':
+          description: Cliente criado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: CPF já cadastrado
+
+  /clientes/{id}:
+    get:
+      tags: [Clientes]
+      summary: Buscar cliente por ID
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clientes/cpf/{cpf}:
+    get:
+      tags: [Clientes]
+      summary: Buscar cliente por CPF
+      description: Endpoint principal consumido pelo OS Service ao abrir uma OS
+      parameters:
+        - name: cpf
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{11}$'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cliente'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /clientes/{id}/desativar:
+    post:
+      tags: [Clientes]
+      summary: Desativar cliente
+      description: |
+        Marca cliente como inativo e publica evento `cliente.desativado`.
+        OS Service consome esse evento para cancelar OSes abertas.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                motivo:
+                  type: string
+                  enum: [solicitacao_cliente, inadimplencia, outro]
+      responses:
+        '204':
+          description: Cliente desativado
+
+  /veiculos:
+    post:
+      tags: [Veiculos]
+      summary: Cadastrar veículo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CriarVeiculoRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Veiculo'
+
+  /veiculos/placa/{placa}:
+    get:
+      tags: [Veiculos]
+      summary: Buscar veículo por placa
+      description: Consumido pelo OS Service ao abrir OS
+      parameters:
+        - name: placa
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Veiculo'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /pecas:
+    get:
+      tags: [Pecas]
+      summary: Listar peças
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Peca'
+
+  /pecas/{id}:
+    get:
+      tags: [Pecas]
+      summary: Buscar peça
+      description: |
+        Consumido pelo Billing Service para calcular orçamento
+        e pelo Execução Service para validar estoque.
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Peca'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /servicos/{id}:
+    get:
+      tags: [Servicos]
+      summary: Buscar serviço
+      description: Consumido pelo Billing Service para calcular orçamento
+      parameters:
+        - $ref: '#/components/parameters/Id'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Servico'
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Requisição inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Cliente:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        nome: { type: string }
+        cpf: { type: string }
+        email: { type: string, format: email }
+        telefone: { type: string }
+        ativo: { type: boolean }
+        criadoEm: { type: string, format: date-time }
+
+    CriarClienteRequest:
+      type: object
+      required: [nome, cpf, email]
+      properties:
+        nome: { type: string }
+        cpf: { type: string, pattern: '^\d{11}$' }
+        email: { type: string, format: email }
+        telefone: { type: string }
+
+    Veiculo:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        placa: { type: string }
+        modelo: { type: string }
+        marca: { type: string }
+        ano: { type: integer }
+        clienteId: { type: string, format: uuid }
+
+    CriarVeiculoRequest:
+      type: object
+      required: [placa, modelo, marca, ano, clienteId]
+      properties:
+        placa: { type: string }
+        modelo: { type: string }
+        marca: { type: string }
+        ano: { type: integer }
+        clienteId: { type: string, format: uuid }
+
+    Peca:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        codigo: { type: string }
+        nome: { type: string }
+        precoUnitario: { type: number, format: decimal }
+        estoque: { type: integer }
+
+    Servico:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        nome: { type: string }
+        precoUnitario: { type: number, format: decimal }
+        tempoEstimadoHoras: { type: number }
+
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }

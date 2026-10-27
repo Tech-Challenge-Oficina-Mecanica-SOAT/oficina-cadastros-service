@@ -32,8 +32,12 @@ builder.Services.AddDbContext<CadastrosDbContext>(opt =>
 builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<CadastrosDbContext>());
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<IVeiculoRepository, VeiculoRepository>();
+builder.Services.AddScoped<IPecaRepository, PecaRepository>();
+builder.Services.AddScoped<IServicoRepository, ServicoRepository>();
 builder.Services.AddScoped<ClienteUseCases>();
 builder.Services.AddScoped<VeiculoUseCases>();
+builder.Services.AddScoped<PecaUseCases>();
+builder.Services.AddScoped<ServicoUseCases>();
 
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<CadastrosDbContext>("db", tags: new[] { "ready" });

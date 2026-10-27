@@ -11,10 +11,7 @@ public class Servico
 
     public Servico(string nome, decimal precoUnitario, decimal tempoEstimadoHoras)
     {
-        if (string.IsNullOrWhiteSpace(nome)) throw new ArgumentException("Nome é obrigatório.", nameof(nome));
-        if (precoUnitario < 0) throw new ArgumentException("Preço não pode ser negativo.", nameof(precoUnitario));
-        if (tempoEstimadoHoras < 0) throw new ArgumentException("Tempo estimado inválido.", nameof(tempoEstimadoHoras));
-
+        ValidarDados(nome, precoUnitario, tempoEstimadoHoras);
         Nome = nome;
         PrecoUnitario = precoUnitario;
         TempoEstimadoHoras = tempoEstimadoHoras;
@@ -22,8 +19,16 @@ public class Servico
 
     public void Atualizar(string nome, decimal precoUnitario, decimal tempoEstimadoHoras)
     {
+        ValidarDados(nome, precoUnitario, tempoEstimadoHoras);
         Nome = nome;
         PrecoUnitario = precoUnitario;
         TempoEstimadoHoras = tempoEstimadoHoras;
+    }
+
+    private static void ValidarDados(string nome, decimal precoUnitario, decimal tempoEstimadoHoras)
+    {
+        if (string.IsNullOrWhiteSpace(nome)) throw new ArgumentException("Nome é obrigatório.", nameof(nome));
+        if (precoUnitario < 0) throw new ArgumentException("Preço não pode ser negativo.", nameof(precoUnitario));
+        if (tempoEstimadoHoras < 0) throw new ArgumentException("Tempo estimado inválido.", nameof(tempoEstimadoHoras));
     }
 }

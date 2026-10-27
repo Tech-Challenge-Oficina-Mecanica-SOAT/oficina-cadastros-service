@@ -14,21 +14,29 @@ public class Veiculo
     public Veiculo(string placa, string modelo, string marca, int ano, Guid clienteId)
     {
         if (string.IsNullOrWhiteSpace(placa)) throw new ArgumentException("Placa é obrigatória.", nameof(placa));
-        if (string.IsNullOrWhiteSpace(modelo)) throw new ArgumentException("Modelo é obrigatório.", nameof(modelo));
-        if (string.IsNullOrWhiteSpace(marca)) throw new ArgumentException("Marca é obrigatória.", nameof(marca));
-        if (ano < 1900 || ano > DateTime.UtcNow.Year + 1) throw new ArgumentException("Ano inválido.", nameof(ano));
+        ValidarDados(modelo, marca, ano);
 
-        Placa = placa.Trim().ToUpperInvariant();
+        Placa = NormalizarPlaca(placa);
         Modelo = modelo;
         Marca = marca;
         Ano = ano;
         ClienteId = clienteId;
     }
 
+    public static string NormalizarPlaca(string placa) => placa.Trim().ToUpperInvariant();
+
     public void Atualizar(string modelo, string marca, int ano)
     {
+        ValidarDados(modelo, marca, ano);
         Modelo = modelo;
         Marca = marca;
         Ano = ano;
+    }
+
+    private static void ValidarDados(string modelo, string marca, int ano)
+    {
+        if (string.IsNullOrWhiteSpace(modelo)) throw new ArgumentException("Modelo é obrigatório.", nameof(modelo));
+        if (string.IsNullOrWhiteSpace(marca)) throw new ArgumentException("Marca é obrigatória.", nameof(marca));
+        if (ano < 1900 || ano > DateTime.UtcNow.Year + 1) throw new ArgumentException("Ano inválido.", nameof(ano));
     }
 }

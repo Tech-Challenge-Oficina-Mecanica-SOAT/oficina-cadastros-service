@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using OficinaCadastros.Application.Abstractions;
 using OficinaCadastros.Domain.Entities;
 
 namespace OficinaCadastros.Infrastructure.Persistence;
 
-public class CadastrosDbContext : DbContext
+public class CadastrosDbContext : DbContext, IUnitOfWork
 {
     public CadastrosDbContext(DbContextOptions<CadastrosDbContext> options) : base(options) { }
 

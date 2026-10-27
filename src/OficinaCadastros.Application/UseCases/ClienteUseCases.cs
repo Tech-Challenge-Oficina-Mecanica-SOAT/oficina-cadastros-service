@@ -1,6 +1,7 @@
 using OficinaCadastros.Application.Abstractions;
 using OficinaCadastros.Application.Common;
 using OficinaCadastros.Application.Dtos;
+using OficinaCadastros.Application.Events;
 using OficinaCadastros.Domain.Entities;
 
 namespace OficinaCadastros.Application.UseCases;
@@ -10,11 +11,13 @@ public class ClienteUseCases
     private static readonly string[] MotivosValidos = { "solicitacao_cliente", "inadimplencia", "outro" };
 
     private readonly IClienteRepository _clientes;
+    private readonly IOutboxRepository _outbox;
     private readonly IUnitOfWork _uow;
 
-    public ClienteUseCases(IClienteRepository clientes, IUnitOfWork uow)
+    public ClienteUseCases(IClienteRepository clientes, IOutboxRepository outbox, IUnitOfWork uow)
     {
         _clientes = clientes;
+        _outbox = outbox;
         _uow = uow;
     }
 
@@ -63,8 +66,11 @@ public class ClienteUseCases
 
         cliente.Desativar();
 
-        // TODO semana 3: gravar o evento cliente.desativado na tabela outbox_events
-        // dentro desta mesma transação (Outbox Pattern), usando o motivo recebido.
+        // Outbox Pattern: o evento é gravado junto com a mudança, no mesmo SaveChanges (mesma transação).
+        // A publicação no SNS acontece depois, pelo OutboxPublisherService.
+        var evento = ClienteDesativadoEvent.Criar(cliente.Id, motivo, DateTime.UtcNow, CorrelationId.Atual());
+        await _outbox.AdicionarAsync(evento, ct);
+
         await _uow.SaveChangesAsync(ct);
     }
 

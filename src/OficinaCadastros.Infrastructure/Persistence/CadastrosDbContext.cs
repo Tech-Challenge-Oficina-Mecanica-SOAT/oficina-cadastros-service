@@ -12,6 +12,7 @@ public class CadastrosDbContext : DbContext, IUnitOfWork
     public DbSet<Veiculo> Veiculos => Set<Veiculo>();
     public DbSet<Peca> Pecas => Set<Peca>();
     public DbSet<Servico> Servicos => Set<Servico>();
+    public DbSet<OutboxEvent> OutboxEvents => Set<OutboxEvent>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -54,6 +55,17 @@ public class CadastrosDbContext : DbContext, IUnitOfWork
             e.Property(x => x.Nome).HasMaxLength(200).IsRequired();
             e.Property(x => x.PrecoUnitario).HasPrecision(12, 2);
             e.Property(x => x.TempoEstimadoHoras).HasPrecision(6, 2);
+        });
+
+        b.Entity<OutboxEvent>(e =>
+        {
+            e.ToTable("outbox_events");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Type).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Payload).HasColumnType("jsonb").IsRequired();
+            e.Property(x => x.LastError).HasMaxLength(1000);
+            // índice parcial: só os pendentes, que são os que o publicador consulta
+            e.HasIndex(x => x.OccurredAt).HasFilter("\"PublishedAt\" IS NULL");
         });
     }
 }

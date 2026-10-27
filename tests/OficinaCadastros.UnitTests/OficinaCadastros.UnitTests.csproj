@@ -13,8 +13,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\OficinaCadastros.Domain\OficinaCadastros.Domain.csproj" />
+    <ProjectReference Include="..\..\src\OficinaCadastros.Application\OficinaCadastros.Application.csproj" />
   </ItemGroup>
   <ItemGroup>
-	<Using Include="Xunit" />
+    <Using Include="Xunit" />
   </ItemGroup>
 </Project>

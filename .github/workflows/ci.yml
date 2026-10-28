@@ -35,7 +35,7 @@ jobs:
 
       - name: Testes com cobertura
         run: >
-          dotnet test --no-build -c Release
+          dotnet test tests/OficinaCadastros.UnitTests --no-build -c Release
           --settings coverlet.runsettings
           --collect:"XPlat Code Coverage"
           --results-directory ./coverage
@@ -70,6 +70,9 @@ jobs:
           if taxa < minimo:
               sys.exit(f"Cobertura {taxa:.1f}% abaixo do mínimo de {minimo:.0f}%.")
           PY
+
+      - name: Testes de integração (Postgres em container)
+        run: dotnet test tests/OficinaCadastros.IntegrationTests --no-build -c Release
 
       - name: Publicar relatório de cobertura
         if: always()

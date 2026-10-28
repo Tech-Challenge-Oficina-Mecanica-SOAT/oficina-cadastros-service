@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Cobertura mínima de linhas em Domain + Application (ver coverlet.runsettings)
+  # Cobertura mínima de linhas, somando testes unitários e de integração (ver scripts/coverage.sh)
   COVERAGE_THRESHOLD: "80"
 
 jobs:
@@ -30,56 +30,18 @@ jobs:
       - name: Restore
         run: dotnet restore
 
-      - name: Build
-        run: dotnet build --no-restore -c Release
+      - name: Instalar ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.*
 
-      - name: Testes com cobertura
-        run: >
-          dotnet test tests/OficinaCadastros.UnitTests --no-build -c Release
-          --settings coverlet.runsettings
-          --collect:"XPlat Code Coverage"
-          --results-directory ./coverage
-
-      - name: Verificar cobertura mínima
-        run: |
-          python3 - <<'PY'
-          import glob, os, sys
-          import xml.etree.ElementTree as ET
-
-          arquivos = glob.glob("coverage/**/coverage.cobertura.xml", recursive=True)
-          if not arquivos:
-              sys.exit("Relatório de cobertura não encontrado.")
-
-          cobertas = validas = 0
-          for arq in arquivos:
-              raiz = ET.parse(arq).getroot()
-              cobertas += int(raiz.get("lines-covered", "0"))
-              validas += int(raiz.get("lines-valid", "0"))
-
-          if validas == 0:
-              sys.exit("Nenhuma linha instrumentada: confira o Include do coverlet.runsettings.")
-
-          taxa = 100.0 * cobertas / validas
-          minimo = float(os.environ["COVERAGE_THRESHOLD"])
-          linha = f"Cobertura de linhas (Domain + Application): {taxa:.1f}% ({cobertas}/{validas}) — mínimo {minimo:.0f}%"
-          print(linha)
-
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as resumo:
-              resumo.write("### Cobertura\n" + linha + "\n")
-
-          if taxa < minimo:
-              sys.exit(f"Cobertura {taxa:.1f}% abaixo do mínimo de {minimo:.0f}%.")
-          PY
-
-      - name: Testes de integração (Postgres em container)
-        run: dotnet test tests/OficinaCadastros.IntegrationTests --no-build -c Release
+      - name: Testes (unitários + integração) e cobertura
+        run: bash scripts/coverage.sh
 
       - name: Publicar relatório de cobertura
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage
-          path: coverage/**/coverage.cobertura.xml
+          name: coverage-report
+          path: coverage/report
           if-no-files-found: ignore
 
   docker-build:

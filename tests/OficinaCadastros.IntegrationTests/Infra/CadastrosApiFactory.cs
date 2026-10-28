@@ -9,13 +9,30 @@ using Testcontainers.PostgreSql;
 
 namespace OficinaCadastros.IntegrationTests.Infra;
 
-/// <summary>Publicador falso: guarda em memória o que o outbox tentaria enviar ao SNS.</summary>
+/// <summary>
+/// Publicador falso: guarda em memória o que o outbox tentaria enviar ao SNS e permite simular
+/// falhas transitórias para um cliente específico (sem afetar os eventos de outros testes).
+/// </summary>
 public class FakeEventPublisher : IEventPublisher
 {
+    private readonly ConcurrentDictionary<string, int> _falhasRestantes = new();
+
     public ConcurrentQueue<OutboxEvent> Published { get; } = new();
+
+    /// <summary>Faz as próximas <paramref name="vezes"/> publicações do evento desse cliente falharem.</summary>
+    public void FalharPara(Guid clienteId, int vezes) => _falhasRestantes[clienteId.ToString()] = vezes;
 
     public Task PublishAsync(OutboxEvent evento, CancellationToken ct)
     {
+        foreach (var (chave, restantes) in _falhasRestantes)
+        {
+            if (restantes > 0 && evento.Payload.Contains(chave))
+            {
+                _falhasRestantes[chave] = restantes - 1;
+                throw new InvalidOperationException("Falha simulada na publicação.");
+            }
+        }
+
         Published.Enqueue(evento);
         return Task.CompletedTask;
     }

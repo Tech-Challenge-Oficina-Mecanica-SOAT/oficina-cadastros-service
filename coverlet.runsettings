@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Cobertura medida apenas em Domain e Application: é onde os testes unitários chegam.
+  Infrastructure e API (repositórios, controllers, middleware) só entram na conta quando
+  existirem os testes de integração da semana 4, e aí o Include abaixo é ampliado.
+-->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Include>[OficinaCadastros.Domain]*,[OficinaCadastros.Application]*</Include>
+          <ExcludeByFile>**/Migrations/**</ExcludeByFile>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

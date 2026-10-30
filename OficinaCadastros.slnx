@@ -6,6 +6,7 @@
     <Project Path="src/OficinaCadastros.Infrastructure/OficinaCadastros.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/OficinaCadastros.BDD/OficinaCadastros.BDD.csproj" />
     <Project Path="tests/OficinaCadastros.IntegrationTests/OficinaCadastros.IntegrationTests.csproj" />
     <Project Path="tests/OficinaCadastros.UnitTests/OficinaCadastros.UnitTests.csproj" />
   </Folder>

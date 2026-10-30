@@ -36,6 +36,9 @@ jobs:
       - name: Testes (unitários + integração) e cobertura
         run: bash scripts/coverage.sh
 
+      - name: Testes BDD (cenários em Gherkin)
+        run: dotnet test tests/OficinaCadastros.BDD --no-build -c Release
+
       - name: Publicar relatório de cobertura
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,0 +1,38 @@
+name: Publicar imagem
+
+# Constrói a imagem e publica no GHCR (o mesmo registry da Fase 3).
+# O deploy no cluster é feito por scripts/deploy.sh: as credenciais do AWS Academy expiram
+# em poucas horas, então não ficam guardadas no GitHub.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publicar-imagem:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Nome da imagem em minúsculas
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build e push
+        run: |
+          docker build -t "$IMAGE:${GITHUB_SHA}" -t "$IMAGE:latest" .
+          docker push "$IMAGE:${GITHUB_SHA}"
+          docker push "$IMAGE:latest"
+
+      - name: Resumo
+        run: echo "Imagem publicada em $IMAGE:${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"

@@ -5,9 +5,9 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    postgresql = {
-      source  = "cyrilgdn/postgresql"
-      version = "~> 1.22"
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
     }
   }
 }
@@ -16,42 +16,28 @@ provider "aws" {
   region = var.aws_region
 }
 
-provider "postgresql" {
-  host      = var.db_host
-  port      = var.db_port
-  username  = var.db_admin_username
-  password  = var.db_admin_password
-  sslmode   = "require"
-  superuser = false
+# O database e a role são criados por scripts/bootstrap-db.sh (o RDS só é alcançável de dentro
+# do cluster). Aqui fica só a senha, guardada no Secrets Manager para o script e o pod lerem.
+resource "random_password" "cadastros_db" {
+  length  = 24
+  special = false
 }
 
-# Database lógico no RDS compartilhado
-resource "postgresql_role" "cadastros" {
-  name     = "cadastros_service_user"
-  login    = true
-  password = var.cadastros_db_password
+resource "aws_secretsmanager_secret" "cadastros_db_password" {
+  name = "oficina/${var.env}/cadastros-db-password"
+
+  # Sem janela de recuperação: permite destroy seguido de novo apply com o mesmo nome.
+  recovery_window_in_days = 0
 }
 
-resource "postgresql_database" "cadastros" {
-  name  = "oficina_cadastros"
-  owner = postgresql_role.cadastros.name
+resource "aws_secretsmanager_secret_version" "cadastros_db_password" {
+  secret_id     = aws_secretsmanager_secret.cadastros_db_password.id
+  secret_string = random_password.cadastros_db.result
 }
 
-# Grants apenas nesse database
-resource "postgresql_grant" "cadastros_connect" {
-  database    = postgresql_database.cadastros.name
-  role        = postgresql_role.cadastros.name
-  object_type = "database"
-  privileges  = ["CONNECT", "CREATE"]
-}
-
-# Descoberta do endpoint (URL real entra na semana 5, após o deploy no EKS)
+# Descoberta do endpoint REST: DNS interno do Service no namespace oficina.
 resource "aws_ssm_parameter" "cadastros_api_url" {
   name  = "/oficina/${var.env}/services/cadastros/api-url"
   type  = "String"
-  value = "pendente-deploy"
-
-  lifecycle {
-    ignore_changes = [value]
-  }
+  value = "http://oficina-cadastros-service.oficina.svc.cluster.local"
 }

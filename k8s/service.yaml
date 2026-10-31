@@ -1,0 +1,18 @@
+# ClusterIP: os demais serviços ficam no mesmo cluster e namespace e chamam por DNS interno.
+# URL publicada no SSM (/oficina/{env}/services/cadastros/api-url):
+#   http://oficina-cadastros-service.oficina.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: oficina-cadastros-service
+  namespace: oficina
+  labels:
+    app: oficina-cadastros-service
+spec:
+  type: ClusterIP
+  selector:
+    app: oficina-cadastros-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

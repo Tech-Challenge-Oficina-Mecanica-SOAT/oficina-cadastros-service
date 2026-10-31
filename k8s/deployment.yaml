@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oficina-cadastros-service
+  namespace: oficina
+  labels:
+    app: oficina-cadastros-service
+spec:
+  # 1 réplica inicial: as migrations rodam na subida (Database__MigrateOnStartup) e o EF Core 8
+  # não trava duas instâncias migrando ao mesmo tempo. O HPA só escala depois que as tabelas existem.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oficina-cadastros-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: oficina-cadastros-service
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      containers:
+        - name: cadastros
+          image: __IMAGE__
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: oficina-cadastros-secrets
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Production
+            - name: Database__MigrateOnStartup
+              value: "true"
+            - name: NEW_RELIC_APP_NAME
+              value: oficina-cadastros-service
+            - name: NEW_RELIC_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: oficina-secrets
+                  key: NEW_RELIC_LICENSE_KEY
+                  optional: true
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              cpu: 500m
+              memory: 384Mi

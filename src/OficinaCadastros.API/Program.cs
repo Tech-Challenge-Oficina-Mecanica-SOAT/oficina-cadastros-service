@@ -71,6 +71,8 @@ if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
     scope.ServiceProvider.GetRequiredService<CadastrosDbContext>().Database.Migrate();
 }
 
+// o correlation ID vem primeiro: assim até os logs de erro do middleware seguinte o carregam
+app.UseMiddleware<CorrelationMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseSwagger();

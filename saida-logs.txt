@@ -1,0 +1,11 @@
+  Determinando os projetos a serem restaurados...
+  Todos os projetos estão atualizados para restauração.
+  OficinaCadastros.Domain -> C:\Users\Pedro\Desktop\PÓS\projeto\oficina-cadastros-service\src\OficinaCadastros.Domain\bin\Debug\net8.0\OficinaCadastros.Domain.dll
+  OficinaCadastros.Application -> C:\Users\Pedro\Desktop\PÓS\projeto\oficina-cadastros-service\src\OficinaCadastros.Application\bin\Debug\net8.0\OficinaCadastros.Application.dll
+  OficinaCadastros.Infrastructure -> C:\Users\Pedro\Desktop\PÓS\projeto\oficina-cadastros-service\src\OficinaCadastros.Infrastructure\bin\Debug\net8.0\OficinaCadastros.Infrastructure.dll
+  OficinaCadastros.API -> C:\Users\Pedro\Desktop\PÓS\projeto\oficina-cadastros-service\src\OficinaCadastros.API\bin\Debug\net8.0\OficinaCadastros.API.dll
+  OficinaCadastros.IntegrationTests -> C:\Users\Pedro\Desktop\PÓS\projeto\oficina-cadastros-service\tests\OficinaCadastros.IntegrationTests\bin\Debug\net8.0\OficinaCadastros.IntegrationTests.dll
+Execução de teste para C:\Users\Pedro\Desktop\PÓS\projeto\oficina-cadastros-service\tests\OficinaCadastros.IntegrationTests\bin\Debug\net8.0\OficinaCadastros.IntegrationTests.dll (.NETCoreApp,Version=v8.0)
+1 arquivos de teste no total corresponderam ao padrão especificado.
+
+Aprovado!  – Com falha:     0, Aprovado:    43, Ignorado:     0, Total:    43, Duração: 5 s - OficinaCadastros.IntegrationTests.dll (net8.0)

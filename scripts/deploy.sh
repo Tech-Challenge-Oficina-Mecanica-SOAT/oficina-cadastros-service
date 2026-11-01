@@ -10,6 +10,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/_ensure-path.sh"
 ENV=${1:-homolog}
 IMAGE=${IMAGE:-ghcr.io/tech-challenge-oficina-mecanica-soat/oficina-cadastros-service:latest}
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$RAIZ"
 
 CLUSTER_NAME=$(aws ssm get-parameter --name "/oficina/$ENV/k8s/cluster-name" --query Parameter.Value --output text)
 aws eks update-kubeconfig --region us-east-1 --name "$CLUSTER_NAME" >/dev/null
@@ -23,8 +24,8 @@ fi
 
 echo "Aplicando manifestos (imagem: $IMAGE)"
 sed "s|__IMAGE__|$IMAGE|g" "$RAIZ/k8s/deployment.yaml" | kubectl apply -f -
-kubectl apply -f "$RAIZ/k8s/service.yaml"
-kubectl apply -f "$RAIZ/k8s/hpa.yaml"
+kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/hpa.yaml
 
 kubectl rollout status deployment/oficina-cadastros-service -n oficina --timeout=5m
 

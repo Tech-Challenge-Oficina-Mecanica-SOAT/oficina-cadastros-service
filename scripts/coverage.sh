@@ -5,6 +5,16 @@
 #         dotnet tool install --global dotnet-reportgenerator-globaltool
 set -euo pipefail
 
+# Docker Desktop (Windows) costuma falhar na primeira criação de container depois de ocioso;
+# um aquecimento com nova tentativa evita derrubar a suíte inteira por isso. No CI não roda.
+if [ -z "${CI:-}" ]; then
+  for tentativa in 1 2 3; do
+    if docker run --rm hello-world >/dev/null 2>&1; then break; fi
+    echo "Docker ainda nao respondeu (tentativa $tentativa/3), aguardando..."
+    sleep 5
+  done
+fi
+
 CONFIG="${CONFIG:-Release}"
 
 rm -rf coverage

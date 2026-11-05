@@ -9,7 +9,7 @@
     <DataCollectors>
       <DataCollector friendlyName="XPlat Code Coverage">
         <Configuration>
-          <Format>cobertura</Format>
+          <Format>cobertura,opencover</Format>
           <Include>[OficinaCadastros.Domain]*,[OficinaCadastros.Application]*,[OficinaCadastros.Infrastructure]*,[OficinaCadastros.API]*</Include>
           <ExcludeByFile>**/Migrations/**</ExcludeByFile>
         </Configuration>

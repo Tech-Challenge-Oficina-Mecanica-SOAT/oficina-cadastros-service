@@ -20,24 +20,63 @@ env:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+      SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # o Sonar precisa do histórico completo
 
+      # O projeto é net8.0 (precisa do runtime 8 para os testes). O .NET 10 entra junto porque o
+      # dotnet-sonarscanner mais recente pode exigir um runtime mais novo para rodar.
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
       - name: Restore
         run: dotnet restore
 
-      - name: Instalar ReportGenerator
-        run: dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.*
+      - name: Instalar ferramentas (SonarScanner e ReportGenerator)
+        run: |
+          dotnet tool install --global dotnet-sonarscanner
+          dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.*
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      # begin precisa vir antes do build (o scripts/coverage.sh compila). Só roda se o token e as
+      # chaves existirem, para PRs de forks e repositórios sem Sonar não quebrarem.
+      - name: SonarQube Cloud - begin
+        if: env.SONAR_TOKEN != '' && env.SONAR_PROJECT_KEY != '' && env.SONAR_ORGANIZATION != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          dotnet sonarscanner begin \
+            /k:"$SONAR_PROJECT_KEY" \
+            /o:"$SONAR_ORGANIZATION" \
+            /d:sonar.token="$SONAR_TOKEN" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.opencover.reportsPaths="coverage/**/coverage.opencover.xml" \
+            /d:sonar.exclusions="**/Migrations/**,**/obj/**" \
+            /d:sonar.coverage.exclusions="**/Migrations/**,**/obj/**,tests/**,**/SnsEventPublisher.cs" \
+            /d:sonar.qualitygate.wait=true
 
       - name: Testes (unitários + integração) e cobertura
         run: bash scripts/coverage.sh
 
       - name: Testes BDD (cenários em Gherkin)
         run: dotnet test tests/OficinaCadastros.BDD --no-build -c Release
+
+      - name: SonarQube Cloud - end (aguarda o Quality Gate)
+        if: env.SONAR_TOKEN != '' && env.SONAR_PROJECT_KEY != '' && env.SONAR_ORGANIZATION != ''
+        run: dotnet sonarscanner end /d:sonar.token="$SONAR_TOKEN"
 
       - name: Publicar relatório de cobertura
         if: always()

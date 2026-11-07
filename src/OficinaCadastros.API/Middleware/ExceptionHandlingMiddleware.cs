@@ -31,7 +31,7 @@ public class ExceptionHandlingMiddleware
 
             context.Response.Clear();
             context.Response.StatusCode = status;
-            await context.Response.WriteAsJsonAsync(error);
+            await context.Response.WriteAsJsonAsync(error, context.RequestAborted);
         }
     }
 

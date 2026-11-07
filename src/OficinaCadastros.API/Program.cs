@@ -68,7 +68,7 @@ var app = builder.Build();
 if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
 {
     using var scope = app.Services.CreateScope();
-    scope.ServiceProvider.GetRequiredService<CadastrosDbContext>().Database.Migrate();
+    await scope.ServiceProvider.GetRequiredService<CadastrosDbContext>().Database.MigrateAsync();
 }
 
 // o correlation ID vem primeiro: assim até os logs de erro do middleware seguinte o carregam
@@ -84,6 +84,6 @@ app.MapControllers();
 app.MapHealthChecks("/health/live", new() { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new() { Predicate = r => r.Tags.Contains("ready") });
 
-app.Run();
+await app.RunAsync();
 
 public partial class Program { }

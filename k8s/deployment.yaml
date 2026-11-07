@@ -22,6 +22,8 @@ spec:
       labels:
         app: oficina-cadastros-service
     spec:
+      # a API não fala com a API do Kubernetes: não precisa do token da service account dentro do pod
+      automountServiceAccountToken: false
       imagePullSecrets:
         - name: ghcr-pull-secret
       containers:
@@ -69,6 +71,8 @@ spec:
             requests:
               cpu: 100m
               memory: 192Mi
+              ephemeral-storage: 256Mi
             limits:
               cpu: 500m
               memory: 384Mi
+              ephemeral-storage: 512Mi

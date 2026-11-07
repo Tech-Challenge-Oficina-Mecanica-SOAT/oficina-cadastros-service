@@ -16,5 +16,5 @@ desativação com evento. A cobertura dos unitários e dos de integração é me
 ## Consequências
 - Os testes de integração e o BDD exigem Docker e levam cerca de um minuto.
 - Somar percentuais de dois relatórios distorceria o resultado, por isso a mescla.
-- Medido na última execução: 93,5% de linhas.
+- Medido na última execução: 93,6% de linhas.
 - O SNS real nunca é exercitado pela suíte (usa publicador falso), então precisa de verificação no ambiente.

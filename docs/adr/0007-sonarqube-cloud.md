@@ -1,0 +1,1 @@
+- Dois riscos de dependência (SSH.NET 2023.0.0, trazido pelo Testcontainers) foram aceitos no Sonar: o pacote só existe nos projetos de teste e não entra na imagem de produção.

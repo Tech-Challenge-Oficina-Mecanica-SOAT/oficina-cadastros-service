@@ -116,10 +116,19 @@ mesclar na `main`. O passo a passo para subir um ambiente está em [`docs/deploy
 
 ## Estado atual e pendências
 
-- **Validado no cluster (homolog):** deploy, migrations, CRUD e a gravação do evento no outbox.
-- **Publicação no SNS na nuvem: não validada.** No único teste, o evento ficou pendente com erro `401` de credenciais. A
-  hipótese, ainda não confirmada, é o limite de salto do serviço de metadados do nó impedindo o pod de obter credenciais
-  (ajuste testado à mão: `http_put_response_hop_limit = 2`). Os testes automatizados usam um publicador falso.
-- **Instrumentação do New Relic .NET:** ainda não feita (o Deployment já recebe a licença, mas a imagem não traz o agente).
-- **SonarCloud:** ainda não configurado.
-- **Decisões a confirmar com o grupo:** registry (GHCR ou ECR), exposição do serviço e prefixo `/cadastros`.
+- **Validado no cluster (homolog):** deploy, migrations, CRUD, gravação do evento no outbox, **publicação no SNS** (log
+  `publicado no SNS`, com MessageId) e **APM do New Relic** (entidade `oficina-cadastros-service` reportando, com o tempo
+  de .NET e de Postgres separados).
+- **Ajustes de infraestrutura que a validação exigiu:**
+  - limite de salto do serviço de metadados (IMDS) em 2, via launch template no node group (infra-k8s). Com o padrão (1),
+    os pods não obtinham credenciais da AWS e a publicação falhava com `401`;
+  - policy de recurso no tópico SNS (`terraform/sns-policy.tf`) liberando `SNS:Publish` para a `LabEksNodeRole`, porque o
+    Learner Lab bloqueia `iam:PutRolePolicy`.
+- **Ressalvas:**
+  - o salto em 2 vale para todo o cluster compartilhado; em produção o caminho correto é uma role por serviço (IRSA);
+  - o Deployment usa `Recreate`, porque o nó `t3.small` não comporta dois pods ao mesmo tempo. Há alguns segundos de
+    indisponibilidade a cada deploy;
+  - os testes automatizados usam um publicador falso; a publicação real no SNS só foi exercitada no cluster.
+- **Qualidade:** SonarQube Cloud com Quality Gate passando (ver [ADR 0007](docs/adr/0007-sonarqube-cloud.md)).
+- **Decisões a confirmar com o grupo:** exposição do serviço (namespace e `ClusterIP`) e prefixo `/cadastros`. O registry
+  é o GHCR, o mesmo usado pelo Billing.

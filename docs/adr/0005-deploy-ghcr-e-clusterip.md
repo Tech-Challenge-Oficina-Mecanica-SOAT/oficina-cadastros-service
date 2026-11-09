@@ -18,3 +18,15 @@ rodam no mesmo cluster e no namespace `oficina`.
 - Se o grupo escolher ECR, mudam a linha da imagem, o `imagePullSecrets` e o workflow.
 - Se houver um gateway com o prefixo `/cadastros` na frente, é preciso `UsePathBase("/cadastros")`.
 - Não há deploy automático a cada merge, é uma ação manual.
+
+## Atualização: validação do SNS na nuvem (homolog)
+
+A publicação de `cliente.desativado` no SNS foi validada no cluster (log `publicado no SNS`, com MessageId). Foram necessários dois ajustes:
+
+- **Limite de salto do IMDS em 2**, via launch template no node group (infra-k8s). Com o padrão (1), os pods não alcançavam as credenciais do nó e a chamada falhava com 401.
+- **Policy de recurso no tópico SNS** (`terraform/sns-policy.tf`), liberando `SNS:Publish` para a `LabEksNodeRole`. O Learner Lab bloqueia `iam:PutRolePolicy`, então a permissão não pode ir na role.
+
+Consequência de segurança: com o salto em 2, qualquer pod do cluster compartilhado alcança as credenciais da role do nó. É aceitável no Learner Lab. Em produção, o caminho correto é uma role por serviço (IRSA).
+
+## Validacao do SNS na nuvem
+Registrada em 2026-11-09 (homolog).
